@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var userBoardrouter = require(`./routes/userboardAPI`);
+var dashboardRouter = require('./routes/dashboard');
 
 const mongoose = require('./db');
 const cors = require('cors');
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', userBoardrouter);
+app.use('/dashboard', dashboardRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
