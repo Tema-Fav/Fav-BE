@@ -7,6 +7,8 @@ const session = require('express-session');
 
 // var indexRouter = require('./routes/index');
 var userBoardrouter = require(`./routes/userboardAPI`);
+var dashboardRouter = require('./routes/dashboard');
+var storeInfoRouter = require('./routes/storeInfo');
 const authRouter = require('./routes/auth');
 const guestRouter = require('./routes/guest');
 const bossRouter = require('./routes/boss');
@@ -31,6 +33,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/api', userBoardrouter);
+app.use('/dashboard', dashboardRouter);
+app.use('/storeInfo', storeInfoRouter);
+
 // app.use('/', indexRouter);
 // app.use('/users', usersRouter);
 app.use('/api/guest', guestRouter);
@@ -48,7 +54,6 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
   res.send('error');
 });
