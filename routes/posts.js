@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
 
 // 포스트 생성하기
 router.post('/', async (req, res) => {
-  const { boss_id, content, is_open, crowd_level } = req.body;
+  const { boss_id, content, is_open, crowd_level, created_at, updated_at } =
+    req.body;
 
   if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
     return res.status(400).json({ error: 'Invalid or missing boss_id' });
@@ -33,6 +34,8 @@ router.post('/', async (req, res) => {
       content,
       is_open,
       crowd_level,
+      created_at,
+      updated_at,
     });
 
     await newPost.save();
