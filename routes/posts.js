@@ -18,9 +18,6 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { boss_id, content, is_open, crowd_level } = req.body;
 
-  // 요청 바디 출력
-  console.log('Request Body:', req.body);
-
   if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
     return res.status(400).json({ error: 'Invalid or missing boss_id' });
   }
@@ -40,6 +37,45 @@ router.post('/', async (req, res) => {
 
     await newPost.save();
     res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 포스트 수정하기 (PUT)
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { content, is_open, crowd_level } = req.body;
+
+  try {
+    const updatedPost = await Post.findByIdAndUpdate(
+      id,
+      { content, is_open, crowd_level },
+      { new: true, runValidators: true }, // updated document 반환
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 포스트 삭제하기 (DELETE)
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedPost = await Post.findByIdAndDelete(id);
+
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
