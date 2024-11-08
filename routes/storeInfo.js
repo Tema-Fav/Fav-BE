@@ -29,8 +29,7 @@ router.post('/', (req, res) => {
   StoreInfo.create({
     store_name,
     store_address,
-    store_phone,
-    boss_name,
+    store_info,
     store_photo,
   }).then((data) => {
     res.json(data);
@@ -41,8 +40,7 @@ router.put('/:id', (req, res) => {
   StoreInfo.findByIdAndUpdate(req.params.id, {
     store_name: req.body.store_name,
     store_address: req.body.store_address,
-    store_phone: req.body.store_phone,
-    boss_name: req.body.boss_name,
+    sotre_info: req.body.store_info,
     store_photo: req.body.store_photo,
   }).then((result) => {
     res.json(result);
