@@ -38,33 +38,3 @@ postSchema.pre('save', function (next) {
 });
 
 module.exports = mongoose.model('Post', postSchema);
-
-router.post('/', async (req, res) => {
-  const { boss_id, content, is_open, crowd_level } = req.body;
-
-  // boss_id 유효성 검사
-  if (!mongoose.Types.ObjectId.isValid(boss_id)) {
-    return res.status(400).json({ error: 'Invalid or missing boss_id' });
-  }
-
-  try {
-    const boss = await Boss.findById(boss_id);
-    if (!boss) {
-      return res.status(404).json({ error: 'Boss not found' });
-    }
-
-    const newPost = new Post({
-      boss_id,
-      content,
-      is_open,
-      crowd_level,
-    });
-
-    await newPost.save();
-    res.status(201).json(newPost);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-module.exports = mongoose.model('Post', postSchema);
