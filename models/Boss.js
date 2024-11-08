@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { isEmail, isLowercase } = require('validator');
+
 const bcrypt = require('bcryptjs');
 
 const bossSchema = new mongoose.Schema({

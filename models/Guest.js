@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { isEmail, isLowerCase } = require('validator');
+
 const bcrypt = require('bcryptjs');
 
 const guestSchema = new mongoose.Schema({
