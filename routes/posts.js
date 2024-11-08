@@ -28,14 +28,13 @@ router.get('/', async (req, res, next) => {
 // 새 Post 생성 (user_id 없이)
 router.post('/', async (req, res, next) => {
   try {
-    const post = await Post.create(req.body); // 예시 post로, 현재 user_id 없이 더미 데이터 전송
+    const post = await Post.create(req.body);
     res.status(201).json(post);
   } catch (err) {
     next(err);
   }
 });
 
-// 특정 Post 업데이트
 router.put('/:id', async (req, res, next) => {
   try {
     const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
@@ -51,7 +50,6 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// 특정 Post 삭제
 router.delete('/:id', async (req, res, next) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.id);
