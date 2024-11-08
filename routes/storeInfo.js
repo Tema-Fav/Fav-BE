@@ -23,17 +23,22 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', (req, res) => {
-  const { store_name, store_address, store_phone, boss_name, store_photo } =
-    req.body;
-  StoreInfo.create({
-    store_name,
-    store_address,
-    store_info,
-    store_photo,
-  }).then((data) => {
-    res.json(data);
-  });
+router.post('/', async (req, res) => {
+  const { store_name, store_address, store_info, store_photo } = req.body;
+
+  try {
+    // 스키마에 맞는 필드로 데이터를 생성합니다.
+    const newStoreInfo = await StoreInfo.create({
+      store_name,
+      store_address,
+      store_info,
+      store_photo,
+    });
+    res.status(201).json(newStoreInfo);
+  } catch (error) {
+    console.error('데이터 생성 중 오류:', error);
+    res.status(500).json({ error: '데이터 생성 중 오류가 발생했습니다.' });
+  }
 });
 
 router.put('/:id', (req, res) => {
@@ -67,13 +72,17 @@ router.get('/search', async (req, res) => {
   }
 
   try {
-    // $regex를 사용하여 name 필드에 검색어가 포함된 가게 검색
     const results = await StoreInfo.find({
-      store_name: { $regex: searchText, $options: 'i' },
+      store_name: { $regex: searchText, $options: 'i' }, // 대소문자 구분 없이 검색
     });
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: '검색 결과가 없습니다.' });
+    }
+
     res.json(results);
   } catch (error) {
-    console.error('검색 중 오류가 발생했습니다.', error);
+    console.error('검색 중 오류가 발생했습니다:', error);
     res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
   }
 });
