@@ -1,66 +1,37 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
+const Boss = require('../models/Boss');
 
-// 특정 Post 조회
-router.get('/:id', async (req, res, next) => {
+// 포스트 생성하기
+router.post('/', async (req, res) => {
+  const { boss_id, content, is_open, crowd_level } = req.body;
+
+  // 요청 바디 출력
+  console.log('Request Body:', req.body);
+
+  if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
+    return res.status(400).json({ error: 'Invalid or missing boss_id' });
+  }
+
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+    const boss = await Boss.findById(boss_id);
+    if (!boss) {
+      return res.status(404).json({ error: 'Boss not found' });
     }
-    res.json(post);
-  } catch (err) {
-    next(err);
-  }
-});
 
-// 모든 Post 조회
-router.get('/', async (req, res, next) => {
-  try {
-    const posts = await Post.find();
-    res.json(posts);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// 새 Post 생성 (user_id 없이)
-router.post('/', async (req, res, next) => {
-  try {
-    const post = await Post.create(req.body); // 예시 post로, 현재 user_id 없이 더미 데이터 전송
-    res.status(201).json(post);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// 특정 Post 업데이트
-router.put('/:id', async (req, res, next) => {
-  try {
-    const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
+    const newPost = new Post({
+      boss_id,
+      content,
+      is_open,
+      crowd_level,
     });
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-    res.json(post);
-  } catch (err) {
-    next(err);
-  }
-});
 
-// 특정 Post 삭제
-router.delete('/:id', async (req, res, next) => {
-  try {
-    const post = await Post.findByIdAndDelete(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-    res.status(204).end();
-  } catch (err) {
-    next(err);
+    await newPost.save();
+    res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
