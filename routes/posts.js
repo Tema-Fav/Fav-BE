@@ -6,7 +6,8 @@ const Boss = require('../models/Boss');
 
 // 포스트 생성하기
 router.post('/', async (req, res) => {
-  const { boss_id, content, is_open, crowd_level } = req.body;
+  const { boss_id, content, is_open, crowd_level, created_at, updated_at } =
+    req.body;
 
   // 요청 바디 출력
   console.log('Request Body:', req.body);
@@ -26,6 +27,8 @@ router.post('/', async (req, res) => {
       content,
       is_open,
       crowd_level,
+      created_at,
+      updated_at,
     });
 
     await newPost.save();

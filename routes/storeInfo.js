@@ -11,6 +11,30 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  const searchText = req.query.q;
+  console.log('>>>>>', searchText);
+
+  if (!searchText || searchText.trim() === '') {
+    return res.status(400).json({ error: '검색어를 입력해주세요.' });
+  }
+
+  try {
+    const results = await StoreInfo.find({
+      store_name: { $regex: searchText, $options: 'i' },
+    });
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: '검색 결과가 없습니다.' });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('검색 중 오류가 발생했습니다:', error.stack || error);
+    res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
+  }
+});
+
 router.get('/:id', async (req, res, next) => {
   try {
     const storeInfo = await StoreInfo.findById(req.params.id);
@@ -61,29 +85,6 @@ router.delete('/:id', async (req, res, next) => {
     res.status(204).end();
   } catch (err) {
     next(err);
-  }
-});
-
-router.get('/search', async (req, res) => {
-  const searchText = req.query.q;
-
-  if (!searchText) {
-    return res.status(400).json({ error: '검색어를 입력해주세요.' });
-  }
-
-  try {
-    const results = await StoreInfo.find({
-      store_name: { $regex: searchText, $options: 'i' }, // 대소문자 구분 없이 검색
-    });
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: '검색 결과가 없습니다.' });
-    }
-
-    res.json(results);
-  } catch (error) {
-    console.error('검색 중 오류가 발생했습니다:', error);
-    res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
   }
 });
 
