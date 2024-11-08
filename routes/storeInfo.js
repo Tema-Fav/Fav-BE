@@ -59,4 +59,23 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  const searchText = req.query.q;
+
+  if (!searchText) {
+    return res.status(400).json({ error: '검색어를 입력해주세요.' });
+  }
+
+  try {
+    // $regex를 사용하여 name 필드에 검색어가 포함된 가게 검색
+    const results = await StoreInfo.find({
+      store_name: { $regex: searchText, $options: 'i' },
+    });
+    res.json(results);
+  } catch (error) {
+    console.error('검색 중 오류가 발생했습니다.', error);
+    res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
+  }
+});
+
 module.exports = router;
