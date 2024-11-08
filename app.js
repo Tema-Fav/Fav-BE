@@ -5,8 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
 
-// var indexRouter = require('./routes/index');
-var userBoardrouter = require(`./routes/userboardAPI`);
+
+var postRouter = require(`./routes/posts`);
 var dashboardRouter = require('./routes/dashboard');
 var storeInfoRouter = require('./routes/storeInfo');
 const authRouter = require('./routes/auth');
@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api', userBoardrouter);
+app.use('/posts', postRouter);
 app.use('/dashboard', dashboardRouter);
 app.use('/storeInfo', storeInfoRouter);
 
@@ -53,7 +53,6 @@ app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
   res.status(err.status || 500);
   res.send('error');
 });
