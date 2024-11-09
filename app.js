@@ -5,7 +5,6 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
 
-
 var postRouter = require(`./routes/posts`);
 var dashboardRouter = require('./routes/dashboard');
 var storeInfoRouter = require('./routes/storeInfo');
@@ -20,7 +19,7 @@ var app = express();
 app.use(
   cors({
     origin: 'http://localhost:5173',
-  })
+  }),
 );
 
 // view engine setup
