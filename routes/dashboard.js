@@ -1,37 +1,29 @@
-// routes/dashboard.js
 const express = require('express');
 const router = express.Router();
 const Dashboard = require('../models/Dashboard');
 
 router.get('/', async (req, res, next) => {
   try {
-    const dashboard = await Dashboard.find();
-    res.json(dashboard);
+    const dashboards = await Dashboard.find();
+    res.json(dashboards);
   } catch (err) {
     next(err);
   }
 });
 
 router.get('/:id', async (req, res, next) => {
+  const { id } = req.params;
   try {
-    const dashboard = await Dashboard.findById(req.params.id);
+    const dashboard = await Dashboard.findOne({ boss_id: id }).populate(
+      'boss_id',
+    ); // boss_id로 검색
     if (!dashboard) {
       return res.status(404).json({ error: 'Dashboard not found' });
     }
-    res.json(dashboard);
-  } catch (err) {
-    next(err);
+    res.status(200).json(dashboard);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-});
-
-router.post('/', (req, res) => {
-  const { name, follow_num } = req.body;
-  Dashboard.create({
-    name,
-    follow_num,
-  }).then((data) => {
-    res.json(data);
-  });
 });
 
 module.exports = router;
