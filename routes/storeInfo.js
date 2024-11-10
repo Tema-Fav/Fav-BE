@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const mongoose = require('mongoose');
 const StoreInfo = require('../models/StoreInfo');
+const Dashboard = require('../models/Dashboard');
 
 // multer 설정: 파일을 'uploads/' 폴더에 저장
 const storage = multer.diskStorage({
@@ -86,6 +87,10 @@ router.post('/:id', upload.single('store_photo'), async (req, res, next) => {
       boss_id, // 수정된 부분
     });
     const savedStoreInfo = await newStoreInfo.save();
+
+    const newDashboard = new Dashboard({ boss_id });
+    await newDashboard.save();
+
     res.status(201).json(savedStoreInfo);
   } catch (error) {
     console.error('데이터 생성 중 오류:', error);
