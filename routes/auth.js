@@ -20,7 +20,12 @@ router.post('/login', async (req, res, next) => {
     }
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const token = createToken({ _id: user._id, email: user.email, role });
+      const token = createToken({
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        role,
+      });
 
       // 역할과 첫 로그인 여부에 따른 리다이렉트 경로 설정
       let redirectPath;
