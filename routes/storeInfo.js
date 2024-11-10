@@ -71,9 +71,10 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// 상점 등록
-router.post('/', upload.single('store_photo'), async (req, res, next) => {
-  const { store_name, store_address, store_info, boss_id } = req.body;
+router.post('/:id', upload.single('store_photo'), async (req, res, next) => {
+  // params에서 boss_id 추출
+  const { id: boss_id } = req.params;
+  const { store_name, store_address, store_info } = req.body;
   const store_photo = req.file ? req.file.path : null;
 
   try {
@@ -82,7 +83,7 @@ router.post('/', upload.single('store_photo'), async (req, res, next) => {
       store_address,
       store_info,
       store_photo,
-      boss_id,
+      boss_id, // 수정된 부분
     });
     const savedStoreInfo = await newStoreInfo.save();
     res.status(201).json(savedStoreInfo);
