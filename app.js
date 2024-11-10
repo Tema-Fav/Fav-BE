@@ -11,6 +11,7 @@ var storeInfoRouter = require('./routes/storeInfo');
 const authRouter = require('./routes/auth');
 const guestRouter = require('./routes/guest');
 const bossRouter = require('./routes/boss');
+const followRouter = require('./routes/follow'); // Add this line
 
 const mongoose = require('./db');
 const cors = require('cors');
@@ -20,7 +21,7 @@ app.use(
   cors({
     origin: 'http://localhost:5173',
     credentials: true,
-  })
+  }),
 );
 
 // view engine setup
@@ -42,6 +43,7 @@ app.use('/storeInfo', storeInfoRouter);
 app.use('/guest', guestRouter);
 app.use('/boss', bossRouter);
 app.use('/api', authRouter);
+app.use('/api', followRouter); // Add this line
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
