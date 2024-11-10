@@ -22,7 +22,7 @@ router.post('/login', async (req, res, next) => {
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = createToken({ _id: user._id, email: user.email, role });
 
-      // 역할과 첫 로그인 여부에 따른 리다이렉트 경로 설ㅈ어
+      // 역할과 첫 로그인 여부에 따른 리다이렉트 경로 설정
       let redirectPath;
       if (role === 'guest') {
         redirectPath = '/userboard';
@@ -36,7 +36,16 @@ router.post('/login', async (req, res, next) => {
           await user.save();
         }
       }
-      return res.status(200).json({ token, role, redirectPath });
+
+      // 클라이언트에서 접근 가능한 쿠키 설정 (토큰을 쿠키에 저장)
+      res.cookie('authToken', token, {
+        maxAge: 60 * 60 * 24 * 3 * 1000, // 3일
+        httpOnly: false, // 클라이언트에서 접근할 수 있도록 설정
+        secure: false, // 프로덕션 환경에서만 secure 설정
+        sameSite: 'Lax', // CSRF 보호를 위한 설정
+      });
+
+      return res.status(200).json({ role, redirectPath });
     }
 
     throw Error('정확하지 않은 이메일이나 비밀번호입니다.');
