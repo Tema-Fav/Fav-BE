@@ -17,6 +17,7 @@ const bossSchema = new mongoose.Schema({
   },
   address: { type: String },
   name: { type: String, required: true },
+  isFirstLogin: { type: Boolean, default: true }, // 첫 로그인 여부 필드
 });
 
 bossSchema.statics.signUp = async function (email, password, address, name) {
