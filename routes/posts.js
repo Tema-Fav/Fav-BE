@@ -56,6 +56,28 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.get('/followed', async (req, res) => {
+  const { storeIds } = req.query;
+
+  try {
+    if (!storeIds) {
+      return res.status(400).json({ error: 'Store IDs are required' });
+    }
+
+    const storeIdArray = storeIds.split(',');
+    const posts = await Post.find({ boss_id: { $in: storeIdArray } })
+      .sort({ created_at: -1 })
+      .populate('boss_id', 'store_name');
+
+    if (posts.length === 0) {
+      return res.status(404).json({ error: 'No posts found for these stores' });
+    }
+
+    return res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 포스트 수정하기 (PUT)
 router.put('/:id', async (req, res) => {

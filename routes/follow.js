@@ -1,34 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Following = require('../models/Following');
-const jwt = require('jsonwebtoken');
 
-// Middleware to verify JWT token
-const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  console.log('Received token:', token); // Add this line
-  if (!token) return res.status(403).json({ message: 'No token provided' });
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      console.error('Token verification error:', err); // Add this line
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    req.userId = decoded._id;
-    console.log('Decoded user ID:', req.userId); // Add this line
-    next();
-  });
-};
-
-router.post('/follow', verifyToken, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { storeId } = req.body;
-    const userId = req.userId;
+    const { userId, storeId } = req.body;
 
-    console.log('Follow request received:', { userId, storeId }); // Add this line
+    console.log('Follow request received:', { userId, storeId });
 
-    if (!storeId) {
-      return res.status(400).json({ message: 'Store ID is required' });
+    if (!userId || !storeId) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'User ID and Store ID are required' });
     }
 
     // Check if already following
@@ -36,11 +19,12 @@ router.post('/follow', verifyToken, async (req, res) => {
       id: userId,
       store_id: storeId,
     });
+
     if (existingFollow) {
       // If already following, unfollow
       await Following.findByIdAndDelete(existingFollow._id);
-      console.log('User unfollowed store:', { userId, storeId }); // Add this line
-      res.json({ message: 'Unfollowed successfully' });
+      console.log('User unfollowed store:', { userId, storeId });
+      res.json({ success: true, message: 'Unfollowed successfully' });
     } else {
       // If not following, create new follow
       const newFollow = new Following({
@@ -48,14 +32,23 @@ router.post('/follow', verifyToken, async (req, res) => {
         store_id: storeId,
       });
       await newFollow.save();
-      console.log('User followed store:', { userId, storeId }); // Add this line
-      res.json({ message: 'Followed successfully' });
+      console.log('User followed store:', { userId, storeId });
+      res.json({ success: true, message: 'Followed successfully' });
     }
   } catch (error) {
     console.error('Error in follow/unfollow:', error);
-    res
-      .status(500)
-      .json({ message: 'Internal server error', error: error.message });
+    if (error.code === 11000) {
+      // Duplicate key error
+      res
+        .status(409)
+        .json({ success: false, message: 'Already following this store' });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message,
+      });
+    }
   }
 });
 
