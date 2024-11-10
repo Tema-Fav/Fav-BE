@@ -19,9 +19,9 @@ const cors = require('cors');
 var app = express();
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://fav-fe-qo2u-self.vercel.app',
     credentials: true,
-  }),
+  })
 );
 
 // view engine setup
