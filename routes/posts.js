@@ -4,29 +4,35 @@ const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Boss = require('../models/Boss');
 
-router.get('/', async (req, res) => {
-  const { user_id } = req.query;
+// GET posts by bossId
+router.get('/:bossId', async (req, res) => {
+  const { bossId } = req.params;
+
+  // Check if bossId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(bossId)) {
+    return res.status(400).json({ error: '유효하지 않은 boss_id 형식입니다.' });
+  }
 
   try {
-    if (user_id) {
-      const posts = await Post.find({ author_id: user_id });
+    // Find posts with the given boss_id
+    const posts = await Post.find({
+      boss_id: new mongoose.Types.ObjectId(bossId),
+    });
 
-      if (posts.length === 0) {
-        return res.status(404).json({ error: 'No posts found for this user' });
-      }
-
-      return res.status(200).json(posts); // 해당 user의 포스트들 반환
-    } else {
-      // user_id가 제공되지 않으면 모든 포스트 조회
-      const posts = await Post.find();
-      res.status(200).json(posts); // 모든 포스트 반환
+    if (posts.length === 0) {
+      return res
+        .status(404)
+        .json({ error: '해당 boss_id의 포스트를 찾을 수 없습니다.' });
     }
+
+    res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('데이터 조회 중 오류:', error);
+    res.status(500).json({ error: '데이터 조회 중 오류가 발생했습니다.' });
   }
 });
 
-// 포스트 생성하기
+// Create a new post
 router.post('/', async (req, res) => {
   const { boss_id, content, is_open, crowd_level } = req.body;
 
@@ -54,7 +60,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 포스트 수정하기 (PUT)
+// Update a post by ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { content, is_open, crowd_level } = req.body;
@@ -63,7 +69,7 @@ router.put('/:id', async (req, res) => {
     const updatedPost = await Post.findByIdAndUpdate(
       id,
       { content, is_open, crowd_level },
-      { new: true, runValidators: true }, // updated document 반환
+      { new: true, runValidators: true },
     );
 
     if (!updatedPost) {
@@ -76,7 +82,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// 포스트 삭제하기 (DELETE)
+// Delete a post by ID
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
