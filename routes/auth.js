@@ -21,7 +21,22 @@ router.post('/login', async (req, res, next) => {
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = createToken({ _id: user._id, email: user.email, role });
-      return res.status(200).json({ token, role });
+
+      // 역할과 첫 로그인 여부에 따른 리다이렉트 경로 설ㅈ어
+      let redirectPath;
+      if (role === 'guest') {
+        redirectPath = '/userboard';
+      } else {
+        // 사장님은 첫 로그인 시 /storeinfo, 이후에는 /dashboard로 이동
+        redirectPath = user.isFirstLogin ? '/storeinfo' : '/dashboard';
+
+        // 첫 로그인 시 isFirstLogin을 false로 업데이트
+        if (user.isFirstLogin) {
+          user.isFirstLogin = false;
+          await user.save();
+        }
+      }
+      return res.status(200).json({ token, role, redirectPath });
     }
 
     throw Error('정확하지 않은 이메일이나 비밀번호입니다.');
