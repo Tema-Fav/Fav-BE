@@ -7,6 +7,7 @@ const Boss = require('../models/Boss');
 // 전체 조회 핸들러
 router.get('/', async (req, res) => {
   try {
+    console.log(req.cookies);
     const posts = await Post.find(); // 모든 Post 데이터 조회
     res.status(200).json(posts); // JSON 형식으로 응답
   } catch (error) {
