@@ -19,7 +19,8 @@ var app = express();
 app.use(
   cors({
     origin: 'http://localhost:5173',
-  }),
+    credentials: true,
+  })
 );
 
 // view engine setup
@@ -38,8 +39,8 @@ app.use('/storeInfo', storeInfoRouter);
 
 // app.use('/', indexRouter);
 // app.use('/users', usersRouter);
-app.use('/api/guest', guestRouter);
-app.use('/api/boss', bossRouter);
+app.use('/guest', guestRouter);
+app.use('/boss', bossRouter);
 app.use('/api', authRouter);
 
 // catch 404 and forward to error handler

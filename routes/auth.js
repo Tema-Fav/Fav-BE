@@ -16,7 +16,7 @@ router.post('/login', async (req, res, next) => {
 
     if (!user) {
       user = await Boss.findOne({ email });
-      role = 'Boss';
+      role = 'boss';
     }
 
     if (user && (await bcrypt.compare(password, user.password))) {
