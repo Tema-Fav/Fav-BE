@@ -57,5 +57,5 @@ visibleBoss.get(function (value, virtual, doc) {
   };
 });
 
-const Boss = mongoose.model('boss', bossSchema);
+const Boss = mongoose.model('Boss', bossSchema);
 module.exports = Boss;
