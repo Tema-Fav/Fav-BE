@@ -3,21 +3,64 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Boss = require('../models/Boss');
+const Following = require('../models/Following');
+const Store = require('../models/StoreInfo'); // Make sure to import the Store model
+
+// Get posts from followed stores
+router.get('/followed/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('Fetching posts for user:', userId);
+
+    // Find stores that the user is following
+    const followedStores = await Following.find({ id: userId }).distinct(
+      'store_id',
+    );
+    console.log('Followed stores:', followedStores);
+
+    // Find boss IDs corresponding to the followed stores
+    const stores = await Store.find({ _id: { $in: followedStores } });
+    const bossIds = stores.map((store) => store.boss_id);
+    console.log('Boss IDs:', bossIds);
+
+    // Fetch posts from followed stores' bosses
+    const posts = await Post.find({ boss_id: { $in: bossIds } })
+      .sort({ created_at: -1 })
+      .populate('boss_id', 'store_name store_photo');
+    console.log('Fetched posts:', posts);
+
+    // Format the response
+    const formattedPosts = posts.map((post) => ({
+      _id: post._id,
+      content: post.content,
+      photo: post.boss_id.store_photo,
+      store_name: post.boss_id.store_name,
+      created_at: post.created_at,
+      is_open: post.is_open,
+      crowd_level: post.crowd_level,
+    }));
+
+    res.status(200).json(formattedPosts);
+  } catch (error) {
+    console.error('Error fetching followed posts:', error);
+    res
+      .status(500)
+      .json({ error: 'Internal server error', details: error.message });
+  }
+});
 
 // GET posts by bossId
 router.get('/:bossId', async (req, res) => {
   const { bossId } = req.params;
 
-  // Check if bossId is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(bossId)) {
     return res.status(400).json({ error: '유효하지 않은 boss_id 형식입니다.' });
   }
 
   try {
-    // Find posts with the given boss_id
     const posts = await Post.find({
       boss_id: new mongoose.Types.ObjectId(bossId),
-    });
+    }).sort({ created_at: -1 });
 
     if (posts.length === 0) {
       return res
@@ -34,8 +77,7 @@ router.get('/:bossId', async (req, res) => {
 
 // Create a new post
 router.post('/', async (req, res) => {
-  const { boss_id, content, is_open, crowd_level, created_at, updated_at } =
-    req.body;
+  const { boss_id, content, is_open, crowd_level } = req.body;
 
   if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
     return res.status(400).json({ error: 'Invalid or missing boss_id' });
@@ -52,35 +94,14 @@ router.post('/', async (req, res) => {
       content,
       is_open,
       crowd_level,
-      created_at,
-      updated_at,
+      created_at: new Date(),
+      updated_at: new Date(),
     });
 
     await newPost.save();
     res.status(201).json(newPost);
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-router.get('/followed', async (req, res) => {
-  const { storeIds } = req.query;
-
-  try {
-    if (!storeIds) {
-      return res.status(400).json({ error: 'Store IDs are required' });
-    }
-
-    const storeIdArray = storeIds.split(',');
-    const posts = await Post.find({ boss_id: { $in: storeIdArray } })
-      .sort({ created_at: -1 })
-      .populate('boss_id', 'store_name');
-
-    if (posts.length === 0) {
-      return res.status(404).json({ error: 'No posts found for these stores' });
-    }
-
-    return res.status(200).json(posts);
-  } catch (error) {
+    console.error('포스트 생성 중 오류:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -93,7 +114,12 @@ router.put('/:id', async (req, res) => {
   try {
     const updatedPost = await Post.findByIdAndUpdate(
       id,
-      { content, is_open, crowd_level },
+      {
+        content,
+        is_open,
+        crowd_level,
+        updated_at: new Date(),
+      },
       { new: true, runValidators: true },
     );
 
@@ -103,6 +129,7 @@ router.put('/:id', async (req, res) => {
 
     res.status(200).json(updatedPost);
   } catch (error) {
+    console.error('포스트 업데이트 중 오류:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -120,6 +147,7 @@ router.delete('/:id', async (req, res) => {
 
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
+    console.error('포스트 삭제 중 오류:', error);
     res.status(500).json({ error: error.message });
   }
 });
