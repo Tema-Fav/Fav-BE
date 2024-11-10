@@ -4,12 +4,23 @@ const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Boss = require('../models/Boss');
 
-// 전체 조회 핸들러
 router.get('/', async (req, res) => {
+  const { user_id } = req.query;
+
   try {
-    console.log(req.cookies);
-    const posts = await Post.find(); // 모든 Post 데이터 조회
-    res.status(200).json(posts); // JSON 형식으로 응답
+    if (user_id) {
+      const posts = await Post.find({ author_id: user_id });
+
+      if (posts.length === 0) {
+        return res.status(404).json({ error: 'No posts found for this user' });
+      }
+
+      return res.status(200).json(posts); // 해당 user의 포스트들 반환
+    } else {
+      // user_id가 제공되지 않으면 모든 포스트 조회
+      const posts = await Post.find();
+      res.status(200).json(posts); // 모든 포스트 반환
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

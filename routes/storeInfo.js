@@ -1,7 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const mongoose = require('mongoose');
 const StoreInfo = require('../models/StoreInfo');
 
+// multer 설정: 파일을 'uploads/' 폴더에 저장
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // 파일이 저장될 폴더
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname); // 파일 이름 설정
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// 전체 상점 정보 조회
 router.get('/', async (req, res, next) => {
   try {
     const storeInfos = await StoreInfo.find();
@@ -11,9 +26,10 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// 상점 검색
 router.get('/search', async (req, res) => {
   const searchText = req.query.q;
-  console.log('>>>>>', searchText);
+  console.log('검색어:', searchText);
 
   if (!searchText || searchText.trim() === '') {
     return res.status(400).json({ error: '검색어를 입력해주세요.' });
@@ -35,27 +51,32 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// 특정 boss_id로 상점 조회
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
+  console.log(`boss_id로 상점 조회 시도: ${id}`);
+
   try {
-    const storeInfo = await StoreInfo.findOne({ boss_id: id }).populate(
-      'boss_id',
-    ); // boss_id로 검색
+    const storeInfo = await StoreInfo.findOne({ boss_id: id });
+
     if (!storeInfo) {
+      console.log('StoreInfo not found');
       return res.status(404).json({ error: 'StoreInfo not found' });
     }
+
+    console.log('StoreInfo found:', storeInfo);
     res.status(200).json(storeInfo);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.post('/', async (req, res, next) => {
-  const { store_name, store_address, store_info, store_photo, boss_id } =
-    req.body;
+// 상점 등록
+router.post('/', upload.single('store_photo'), async (req, res, next) => {
+  const { store_name, store_address, store_info, boss_id } = req.body;
+  const store_photo = req.file ? req.file.path : null;
 
   try {
-    // 스키마에 맞는 필드로 데이터를 생성합니다.
     const newStoreInfo = new StoreInfo({
       store_name,
       store_address,
@@ -71,6 +92,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// 상점 정보 수정
 router.put('/:id', async (req, res, next) => {
   const { id } = req.params;
   const { store_name, store_address, store_info, store_photo } = req.body;
@@ -92,6 +114,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
+// 상점 삭제
 router.delete('/:id', async (req, res, next) => {
   const { id } = req.params;
 
