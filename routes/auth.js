@@ -34,7 +34,6 @@ router.post('/login', async (req, res, next) => {
       } else {
         // 사장님은 첫 로그인 시 /storeinfo, 이후에는 /dashboard로 이동
         redirectPath = user.isFirstLogin ? '/storeinfo' : '/dashboard';
-
         // 첫 로그인 시 isFirstLogin을 false로 업데이트
         if (user.isFirstLogin) {
           user.isFirstLogin = false;
