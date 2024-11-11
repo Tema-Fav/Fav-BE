@@ -1,18 +1,18 @@
-// routes/dashboard.js
 const express = require('express');
 const router = express.Router();
 const Dashboard = require('../models/Dashboard');
 
 router.get('/', async (req, res, next) => {
   try {
-    const dashboard = await Dashboard.find();
-    res.json(dashboard);
+    const dashboards = await Dashboard.find().populate('boss_id', 'name');
+    res.json(dashboards);
   } catch (err) {
     next(err);
   }
 });
 
 router.get('/:id', async (req, res, next) => {
+  const { id } = req.params;
   try {
     // id 값이 유효한지 체크
     if (!id) {
@@ -35,17 +35,8 @@ router.get('/:id', async (req, res, next) => {
     res
       .status(500)
       .json({ error: error.message || 'An unexpected error occurred' });
-  }
-});
 
-router.post('/', (req, res) => {
-  const { name, follow_num } = req.body;
-  Dashboard.create({
-    name,
-    follow_num,
-  }).then((data) => {
-    res.json(data);
-  });
+  }
 });
 
 module.exports = router;

@@ -1,66 +1,154 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
+const Boss = require('../models/Boss');
+const Following = require('../models/Following');
+const Store = require('../models/StoreInfo'); // Make sure to import the Store model
 
-// 특정 Post 조회
-router.get('/:id', async (req, res, next) => {
+// Get posts from followed stores
+router.get('/followed/:userId', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+    const { userId } = req.params;
+    console.log('Fetching posts for user:', userId);
+
+    // Find stores that the user is following
+    const followedStores = await Following.find({ id: userId }).distinct(
+      'store_id',
+    );
+    console.log('Followed stores:', followedStores);
+
+    // Find boss IDs corresponding to the followed stores
+    const stores = await Store.find({ _id: { $in: followedStores } });
+    const bossIds = stores.map((store) => store.boss_id);
+    console.log('Boss IDs:', bossIds);
+
+    // Fetch posts from followed stores' bosses
+    const posts = await Post.find({ boss_id: { $in: bossIds } })
+      .sort({ created_at: -1 })
+      .populate('boss_id', 'store_name store_photo');
+    console.log('Fetched posts:', posts);
+
+    // Format the response
+    const formattedPosts = posts.map((post) => ({
+      _id: post._id,
+      content: post.content,
+      photo: post.boss_id.store_photo,
+      store_name: post.boss_id.store_name,
+      created_at: post.created_at,
+      is_open: post.is_open,
+      crowd_level: post.crowd_level,
+    }));
+
+    res.status(200).json(formattedPosts);
+  } catch (error) {
+    console.error('Error fetching followed posts:', error);
+    res
+      .status(500)
+      .json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// GET posts by bossId
+router.get('/:bossId', async (req, res) => {
+  const { bossId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(bossId)) {
+    return res.status(400).json({ error: '유효하지 않은 boss_id 형식입니다.' });
+  }
+
+  try {
+    const posts = await Post.find({
+      boss_id: new mongoose.Types.ObjectId(bossId),
+    }).sort({ created_at: -1 });
+
+    if (posts.length === 0) {
+      return res
+        .status(404)
+        .json({ error: '해당 boss_id의 포스트를 찾을 수 없습니다.' });
     }
-    res.json(post);
-  } catch (err) {
-    next(err);
+
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error('데이터 조회 중 오류:', error);
+    res.status(500).json({ error: '데이터 조회 중 오류가 발생했습니다.' });
   }
 });
 
-// 모든 Post 조회
-router.get('/', async (req, res, next) => {
-  try {
-    const posts = await Post.find();
-    res.json(posts);
-  } catch (err) {
-    next(err);
-  }
-});
+// Create a new post
+router.post('/', async (req, res) => {
+  const { boss_id, content, is_open, crowd_level } = req.body;
 
-// 새 Post 생성 (user_id 없이)
-router.post('/', async (req, res, next) => {
-  try {
-    const post = await Post.create(req.body); // 예시 post로, 현재 user_id 없이 더미 데이터 전송
-    res.status(201).json(post);
-  } catch (err) {
-    next(err);
+  if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
+    return res.status(400).json({ error: 'Invalid or missing boss_id' });
   }
-});
 
-// 특정 Post 업데이트
-router.put('/:id', async (req, res, next) => {
   try {
-    const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
+    const boss = await Boss.findById(boss_id);
+    if (!boss) {
+      return res.status(404).json({ error: 'Boss not found' });
+    }
+
+    const newPost = new Post({
+      boss_id,
+      content,
+      is_open,
+      crowd_level,
+      created_at: new Date(),
+      updated_at: new Date(),
     });
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-    res.json(post);
-  } catch (err) {
-    next(err);
+
+    await newPost.save();
+    res.status(201).json(newPost);
+  } catch (error) {
+    console.error('포스트 생성 중 오류:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// 특정 Post 삭제
-router.delete('/:id', async (req, res, next) => {
+// Update a post by ID
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { content, is_open, crowd_level } = req.body;
+
   try {
-    const post = await Post.findByIdAndDelete(req.params.id);
-    if (!post) {
+    const updatedPost = await Post.findByIdAndUpdate(
+      id,
+      {
+        content,
+        is_open,
+        crowd_level,
+        updated_at: new Date(),
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedPost) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    res.status(204).end();
-  } catch (err) {
-    next(err);
+
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    console.error('포스트 업데이트 중 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a post by ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedPost = await Post.findByIdAndDelete(id);
+
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('포스트 삭제 중 오류:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
