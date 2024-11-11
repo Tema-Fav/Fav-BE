@@ -14,13 +14,27 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const dashboard = await Dashboard.findById(req.params.id);
+    // id 값이 유효한지 체크
+    if (!id) {
+      return res.status(400).json({ error: 'ID is required' });
+    }
+
+    const dashboard = await Dashboard.findOne({ boss_id: id }).populate({
+      path: 'boss_id',
+      select: 'name',
+    });
+
     if (!dashboard) {
       return res.status(404).json({ error: 'Dashboard not found' });
     }
-    res.json(dashboard);
-  } catch (err) {
-    next(err);
+
+    res.status(200).json(dashboard);
+  } catch (error) {
+    // 전체 오류 로그를 확인
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: error.message || 'An unexpected error occurred' });
   }
 });
 
