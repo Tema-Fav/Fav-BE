@@ -19,7 +19,7 @@ const cors = require('cors');
 var app = express();
 app.use(
   cors({
-    origin: 'http://43.201.2.61',
+    origin: 'http://43.201.2.61/',
     credentials: true,
   })
 );
