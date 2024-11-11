@@ -52,4 +52,33 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/:storeId', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    console.log('Fetching followers for store:', storeId);
+
+    if (!storeId) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Store ID is required' });
+    }
+
+    // Find all followers of the specified store
+    const followers = await Following.find({ store_id: storeId }, 'id'); // Only select `id` field (userId)
+
+    // Extract and return the user IDs
+    const followerIds = followers.map((follow) => follow.id);
+
+    return res.json({ success: true, followers: followerIds });
+  } catch (error) {
+    console.error('Error fetching followers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

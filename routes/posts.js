@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Boss = require('../models/Boss');
 const Following = require('../models/Following');
-const Store = require('../models/StoreInfo'); // Make sure to import the Store model
+const Store = require('../models/StoreInfo');
 
 // Get posts from followed stores
 router.get('/followed/:userId', async (req, res) => {
@@ -24,22 +24,35 @@ router.get('/followed/:userId', async (req, res) => {
     console.log('Boss IDs:', bossIds);
 
     // Fetch posts from followed stores' bosses
-    const posts = await Post.find({ boss_id: { $in: bossIds } })
-      .sort({ created_at: -1 })
-      .populate('boss_id', 'store_name store_photo');
-    console.log('Fetched posts:', posts);
+    const posts = await Post.find({ boss_id: { $in: bossIds } }).sort({
+      created_at: -1,
+    });
 
-    // Format the response
-    const formattedPosts = posts.map((post) => ({
-      _id: post._id,
+    console.log('가져온 게시물:', JSON.stringify(posts, null, 2));
+
+    // Format the posts
+    let formattedPosts = posts.map((post) => ({
+      _id: post._id.toString(),
       content: post.content,
-      photo: post.boss_id.store_photo,
-      store_name: post.boss_id.store_name,
       created_at: post.created_at,
       is_open: post.is_open,
       crowd_level: post.crowd_level,
+      boss_id: post.boss_id.toString(),
     }));
 
+    // Fetch store info for each post and add it to the formatted posts
+    formattedPosts = await Promise.all(
+      formattedPosts.map(async (post) => {
+        const storeInfo = await Store.findOne({ boss_id: post.boss_id });
+        return {
+          ...post,
+          store_name: storeInfo ? storeInfo.store_name : '알 수 없는 가게',
+          photo: storeInfo ? storeInfo.store_photo : null,
+        };
+      }),
+    );
+
+    console.log('보내는 응답:', JSON.stringify(formattedPosts, null, 2));
     res.status(200).json(formattedPosts);
   } catch (error) {
     console.error('Error fetching followed posts:', error);
@@ -77,7 +90,8 @@ router.get('/:bossId', async (req, res) => {
 
 // Create a new post
 router.post('/', async (req, res) => {
-  const { boss_id, content, is_open, crowd_level } = req.body;
+  const { boss_id, content, is_open, crowd_level, store_name, store_photo } =
+    req.body;
 
   if (!boss_id || !mongoose.Types.ObjectId.isValid(boss_id)) {
     return res.status(400).json({ error: 'Invalid or missing boss_id' });
@@ -94,6 +108,8 @@ router.post('/', async (req, res) => {
       content,
       is_open,
       crowd_level,
+      store_name,
+      store_photo,
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -109,7 +125,7 @@ router.post('/', async (req, res) => {
 // Update a post by ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { content, is_open, crowd_level } = req.body;
+  const { content, is_open, crowd_level, store_name, store_photo } = req.body;
 
   try {
     const updatedPost = await Post.findByIdAndUpdate(
@@ -118,6 +134,8 @@ router.put('/:id', async (req, res) => {
         content,
         is_open,
         crowd_level,
+        store_name,
+        store_photo,
         updated_at: new Date(),
       },
       { new: true, runValidators: true },

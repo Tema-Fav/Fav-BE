@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const Post = require('../models/Post');
 const Boss = require('../models/Boss');
-
 const postSchema = new mongoose.Schema(
   {
     boss_id: {
@@ -26,16 +25,15 @@ const postSchema = new mongoose.Schema(
     store_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Store',
-      required: true,
+      required: false,
     },
   },
   {
-    timestamps: true, // created_at과 updated_at 자동 관리
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
+  }
 );
-
 // Virtual field 설정
 postSchema.virtual('store', {
   ref: 'Store',
@@ -43,5 +41,4 @@ postSchema.virtual('store', {
   foreignField: '_id',
   justOne: true,
 });
-
 module.exports = mongoose.model('Post', postSchema);
