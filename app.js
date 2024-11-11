@@ -19,9 +19,9 @@ const cors = require('cors');
 var app = express();
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: 'http://43.201.2.61/',
     credentials: true,
-  }),
+  })
 );
 
 // view engine setup
